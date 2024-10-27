@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Outil de Similarité des Lacs</title>
+<script type="text/javascript">
+        function calculateSimilarity() {
+            // Récupérer les valeurs de l'utilisateur
+            var superficie = parseFloat(document.getElementById('superficie').value);
+            var profondeur = parseFloat(document.getElementById('profondeur').value);
+ 
+            // Matrice des données de superficie et profondeur moyenne des 11 lacs modélisés
+            var lacsmod = [
+                [13.40348, 6.82], [30.60218, 12.18], [50.787, 7.63], [83.32935, 2.16],
+                [125.02914, 7.32], [366.41746, 12.36], [1215.19919, 50.76], [1256.6, 22.34],
+                [2444.8387, 13.65], [5108.09639, 2.41], [21305.6877, 8.93]
+            ];
+ 
+            // Ajouter le nouveau lac
+            var nvlac = [superficie, profondeur];
+            lacsmod.push(nvlac);
+ 
+            // Normalisation des données (Z-score)
+            var data_mean = [0, 0];
+            var data_std = [0, 0];
+            for (var i = 0; i < lacsmod[0].length; i++) {
+                var sum = 0;
+                for (var j = 0; j < lacsmod.length; j++) {
+                    sum += lacsmod[j][i];
+                }
+                data_mean[i] = sum / lacsmod.length;
+                var variance = 0;
+                for (var j = 0; j < lacsmod.length; j++) {
+                    variance += Math.pow(lacsmod[j][i] - data_mean[i], 2);
+                }
+                data_std[i] = Math.sqrt(variance / lacsmod.length);
+            }
+ 
+            var normalized_data = [];
+            for (var i = 0; i < lacsmod.length; i++) {
+                normalized_data[i] = [
+                    (lacsmod[i][0] - data_mean[0]) / data_std[0],
+                    (lacsmod[i][1] - data_mean[1]) / data_std[1]
+                ];
+            }
+ 
+            // Calculer la distance euclidienne
+            function euclideanDistance(a, b) {
+                return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
+            }
+ 
+            var distances = [];
+            for (var i = 0; i < normalized_data.length; i++) {
+                distances[i] = [];
+                for (var j = 0; j < normalized_data.length; j++) {
+                    distances[i][j] = euclideanDistance(normalized_data[i], normalized_data[j]);
+                }
+            }
+ 
+            // Convertir la distance en similarité
+            var similarity = [];
+            for (var i = 0; i < distances.length; i++) {
+                similarity[i] = [];
+                for (var j = 0; j < distances[i].length; j++) {
+                    similarity[i][j] = 1 / (1 + distances[i][j]);
+                }
+            }
+ 
+            // Supprimer données à partir de la 12ième colonne
+            for (var i = 0; i < similarity.length; i++) {
+                similarity[i] = similarity[i].slice(0, 11);
+            }
+ 
+            // Trouver les valeurs maximales de similarité pour le nouveau lac et le lac modélisé correspondant
+            var maxValues = [];
+            var colIndices = [];
+            for (var i = 0; i < similarity.length; i++) {
+                var maxVal = Math.max(...similarity[i]);
+                maxValues.push(maxVal);
+                colIndices.push(similarity[i].indexOf(maxVal));
+            }
+ 
+            var laccor = colIndices[11];
+            var valmax = maxValues[11];
+            var laccorstr = '';
+            switch (laccor) {
+                case 0: laccorstr = 'Alphonse'; break;
+                case 1: laccorstr = 'Français'; break;
+                case 2: laccorstr = 'à la Pipe'; break;
+                case 3: laccorstr = 'Simoncouche'; break;
+                case 4: laccorstr = 'Nécessité'; break;
+                case 5: laccorstr = 'Chaumonot'; break;
+                case 6: laccorstr = 'Montjoie'; break;
+                case 7: laccorstr = 'Jacques-Cartier'; break;
+                case 8: laccorstr = 'Pluto'; break;
+                case 9: laccorstr = 'Guéguen'; break;
+                case 10: laccorstr = 'Chibougamau'; break;
+            }
+ 
+            // Afficher les résultats
+            document.getElementById('result').innerHTML = 'Valeurs maximales de similarité : ' + valmax + '<br>Lac modélisé le plus similaire : ' + laccorstr;
+        }
+</script>
+</head>
+<body>
+<h1>Outil de Similarité des Lacs</h1>
+<p>Indiquer la superficie (ha) et la profondeur moyenne (m) du lac d'intérêt :</p>
+<label for="superficie">Superficie (ha) :</label>
+<input type="number" id="superficie" name="superficie"><br><br>
+<label for="profondeur">Profondeur moyenne (m) :</label>
+<input type="number" id="profondeur" name="profondeur"><br><br>
+<button onclick="calculateSimilarity()">Calculer Similarité</button>
+<div id="result"></div>
+</body>
+</html>
